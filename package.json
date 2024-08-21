@@ -1,0 +1,16 @@
+{
+  "name": "backend-project",
+  "version": "1.0.0",
+  "description": "Twibeo project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "backend",
+    "twibeo"
+  ],
+  "author": "kamran",
+  "license": "ISC"
+}
