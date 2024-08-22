@@ -15,6 +15,8 @@
   "author": "kamran",
   "license": "ISC",
   "devDependencies": {
+    "@types/mongoose": "^5.11.97",
+    "eslint": "^9.9.0",
     "nodemon": "^3.1.4",
     "prettier": "^3.3.3"
   },
