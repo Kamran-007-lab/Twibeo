@@ -22,8 +22,20 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409,"Someone with this username/email already exists")
   }
   //alp=avatar local path
-  const alp=req.files?.avatar[0]?.path;
-  const clp=req.files?.coverImage[0]?.path;
+  //curl= cover local path url
+  let alp=null;
+  let clp=null;
+  let curl="";
+  
+  if(req.files && Array.isArray(req.files.avatar) &&req.files.avatar && req.files.avatar.length>0){
+    alp=req.files.avatar[0].path;
+  }
+
+  if(req.files && Array.isArray(req.files.coverImage) &&req.files.coverImage && req.files.coverImage.length>0){
+    clp=req.files.coverImage[0].path;
+  }
+
+  // console.log(req.files)
 
   if(!alp){
     throw new ApiError(400,"Avatar file is required")
@@ -32,6 +44,11 @@ const registerUser = asyncHandler(async (req, res) => {
   const avatar=await uploadOnCloudinary(alp)
   const cover=await uploadOnCloudinary(clp)
 
+  
+  if(clp && cover){
+    curl=cover.url;
+  }
+
   if(!avatar){
     throw new ApiError(400,"Avatar file is required")
   }
@@ -39,13 +56,13 @@ const registerUser = asyncHandler(async (req, res) => {
   const user=await User.create({
     fullname,
     avatar:avatar.url,
-    coverImage:cover?.url || "",
+    coverImage:curl,
     email,
     password,
     username: username.toLowerCase()
   })
 
-  const createduser = User.findById(user._id).select(
+  const createduser =await User.findById(user._id).select(
     "-password -refreshToken"
   )
   if(!createduser){
