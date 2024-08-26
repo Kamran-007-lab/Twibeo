@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessRefreshToken = async (userId) => {
   try {
@@ -153,8 +154,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -239,9 +240,10 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+  // console.log(req.user);
   return res
     .status(200)
-    .json(200, req.user, "Current user fetched successfully");
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 });
 
 const updateAccountDetails =  asyncHandler(async (req, res) => {
@@ -386,7 +388,8 @@ const getUserChannelProfile = asyncHandler(async(req,res) =>{
 
 })
 
-const getWatchHistory = asyncHandler (async(req,res) => {
+const getWatchHistory = asyncHandler(async(req,res) => {
+  // console.log("abcd");
   const user=await User.aggregate([
     {
       $match :{
@@ -428,7 +431,7 @@ const getWatchHistory = asyncHandler (async(req,res) => {
       }
     }
   ])
-  
+  // console.log("abcd");
   return res.status(200).json(new ApiResponse(200,user[0].watchHistory,"Watch history fetched successfully"))
 
 
