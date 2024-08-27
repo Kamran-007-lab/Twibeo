@@ -71,7 +71,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
   const total = await Video.aggregatePaginate(videoAggregate, options);
   if (!total) {
-    throw new ApiError(500, "Unexpected issue while aggregation");
+    throw new ApiError(500, "Unexpected issue while video aggregation");
   }
   //   console.log(total);
 
@@ -274,7 +274,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "This video is not published by you !!");
   }
 
-  const delVideo = await Video.findByIdAndDelete(videoId);
+  const delVideo = await Video.findByIdAndDelete(videoId,{new:true});
+
+  if(!delVideo){
+    throw new ApiError(400,"Some error occured while deleting the video")
+  }
+
   const watchHistory = req.user?.watchHistory;
   let newwatchHistory = [];
   if (watchHistory.includes(videoId)) {
