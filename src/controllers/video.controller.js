@@ -7,7 +7,14 @@ import asyncHandler from "../utils/asyncHandler.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, query="", sortBy, sortType, userId } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    query = "",
+    sortBy,
+    sortType,
+    userId,
+  } = req.query;
   //TODO: get all videos based on query, sort, pagination
 
   const videoAggregate = Video.aggregate([
@@ -62,16 +69,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
     limit: parseInt(limit),
   };
 
-  const total= await Video.aggregatePaginate(videoAggregate,options)
-  if(!total){
-    throw new ApiError(500,"Unexpected issue while aggregation")
+  const total = await Video.aggregatePaginate(videoAggregate, options);
+  if (!total) {
+    throw new ApiError(500, "Unexpected issue while aggregation");
   }
-//   console.log(total);
+  //   console.log(total);
 
   if (total?.videos?.length === 0 && userId) {
-    return res
-      .status(200)
-      .json(new ApiResponse(200, [], "No videos found"));
+    return res.status(200).json(new ApiResponse(200, [], "No videos found"));
   }
 
   return res
@@ -118,7 +123,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
   if (!tlp) {
     throw new ApiError(400, "Thumbnail is required");
   }
-//   console.log(req.files);
+  //   console.log(req.files);
 
   const videoFile = await uploadOnCloudinary(vlp);
   const thumbnail = await uploadOnCloudinary(tlp);
@@ -164,9 +169,67 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Failed to fetch the video");
   }
 
+  const watchHistory = req.user?.watchHistory;
+
+  if (!watchHistory.includes(videoId)) {
+    const newwatchHistory = [...watchHistory, videoId];
+    await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: {
+          watchHistory: newwatchHistory,
+        },
+      },
+      { new: true }
+    );
+
+    console.log(newwatchHistory);
+
+    await Video.findByIdAndUpdate(
+      videoId,
+      {
+        $inc: { views: 1 },
+      },
+      { new: true }
+    );
+  }
+
+  const fetchedVideo = await Video.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              fullname: 1,
+              avatar: "$avatar.url",
+              _id: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        owner: {
+          $first: "$owner",
+        },
+      },
+    },
+  ]);
+
   return res
     .status(200)
-    .json(new ApiResponse(200, video, "Video fetched successfully"));
+    .json(new ApiResponse(200, fetchedVideo[0], "Video fetched successfully"));
 
   //TODO: get video by id
 });
@@ -205,7 +268,28 @@ const deleteVideo = asyncHandler(async (req, res) => {
   if (!videoId) {
     throw new ApiError(400, "Invalid delete-video request");
   }
+
+  const video = await Video.findById(videoId);
+  if (video.owner !== req.user?._id) {
+    throw new ApiError(400, "This video is not published by you !!");
+  }
+
   const delVideo = await Video.findByIdAndDelete(videoId);
+  const watchHistory = req.user?.watchHistory;
+  let newwatchHistory = [];
+  if (watchHistory.includes(videoId)) {
+    newwatchHistory = watchHistory.filter((id) => id !== videoId);
+  }
+
+  await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        watchHistory: newwatchHistory,
+      },
+    },
+    { new: true }
+  );
   //TODO: delete video
   return res
     .status(201)
@@ -218,6 +302,10 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid Toggle request");
   }
   const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(400, "Invalid video request");
+  }
+
   const toggleVideo = await Video.findByIdAndUpdate(
     videoId,
     {
