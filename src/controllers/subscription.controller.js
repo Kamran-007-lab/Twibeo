@@ -15,8 +15,9 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     }
    
     const subscription=await Subscription.findOne({channel:channelId, subscriber:userId})
+    console.log(subscription)
 
-    if(!subscription){
+    if(subscription){
         await Subscription.findByIdAndDelete(subscription._id,{new:true})
     }
     else{
@@ -30,7 +31,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
 // return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-    const {channelId} = req.params
+    const {subscriberId:channelId} = req.params
     if(!channelId){
         throw new ApiError(400,"Error while fetching the channel id")
     }
@@ -38,15 +39,17 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     if(!req.user?._id){
         throw new ApiError(400,"Unauthorized request")
     }
-
-    if(channelId!==req.user?._id){
+    const newchannelId=new mongoose.Types.ObjectId(channelId)
+    // console.log(newchannelId);
+    // console.log(req.user._id)
+    if(!newchannelId.equals(req.user?._id)){
         throw new ApiError(404,"This channel is not owned by you")
     }
 
     const subscription=await Subscription.aggregate([
         {
             $match:{
-                channel:new mongoose.Types.ObjectId(channelId)
+                channel:newchannelId
             }
         },
         {
@@ -85,7 +88,8 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 // return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-    const { subscriberId } = req.params
+    console.log("abcd")
+    const { channelId:subscriberId } = req.params
 
     if(!subscriberId){
         throw new ApiError(400,"Error while fetching the channel id")
@@ -116,7 +120,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         },
         {
             $addFields:{
-                subscriber:{
+                channel:{
                     $first:"$channel"
                 }
             }
