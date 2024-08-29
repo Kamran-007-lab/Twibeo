@@ -19,9 +19,10 @@ router.route("/register").post(
     ]),
     registerUser
 )
+// const fields=[]
 
 
-router.route("/login").post(loginUser)
+router.route("/login").post( loginUser)
 
 // secured routes
 router.route("/logout").post(verifyJWT, logoutUser)
