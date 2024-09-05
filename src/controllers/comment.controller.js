@@ -7,7 +7,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 const getVideoComments = asyncHandler(async (req, res) => {
   //TODO: get all comments for a video
   const { videoId } = req.params;
-  const { page = 1, limit = 10 } = req.query;
+  // const { page = 1, limit = 10 } = req.query;
   
   if (!videoId) {
     throw new ApiError(400, "Invalid video id");
@@ -47,23 +47,23 @@ const getVideoComments = asyncHandler(async (req, res) => {
       
     ]);
   
-    const page=1
-    const limit=20
-    const options = {
-      page:parseInt(page),
-      limit:parseInt(limit),
-      customLabels: {
-        totalDocs: "totalComments",
-        docs: "comments",
-      },
-      skip: (page - 1) * limit,
-      // limit: parseInt(limit),
-    };
+    // const page=1
+    // const limit=20
+    // const options = {
+    //   page:parseInt(page),
+    //   limit:parseInt(limit),
+    //   customLabels: {
+    //     totalDocs: "totalComments",
+    //     docs: "comments",
+    //   },
+    //   skip: (page - 1) * limit,
+    //   // limit: parseInt(limit),
+    // };
   
-    const comments = await Comment.aggregatePaginate(commentAggregate, options);
-    if (!comments) {
-      throw new ApiError(400, "An error occured while fetching the comments");
-    }
+    // const comments = await Comment.aggregatePaginate(commentAggregate, options);
+    // if (!comments) {
+    //   throw new ApiError(400, "An error occured while fetching the comments");
+    // }
   
     return res
       .status(201)
