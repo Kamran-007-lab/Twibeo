@@ -6,6 +6,55 @@ import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 
+const getMyVideos = asyncHandler(async (req,res) => {
+const {userId}=req.params;
+if(!userId){
+  throw new ApiError(400,"Invalid user id")
+}
+
+const videoAggregate=await Video.aggregate([
+  {
+    $match:{
+      owner: new mongoose.Types.ObjectId(userId),
+    }
+  },
+  {
+    $lookup:{
+      from:"users",
+      localField:"owner",
+      foreignField:"_id",
+      as:"ownerVideos",
+      pipeline:[
+        {
+          $project:{
+            username:1,
+            fullname:1,
+            avatar:1,
+            _id:1,
+          }
+        }
+      ]
+    }
+  },
+  {
+    $addFields:{
+      ownerVideos:{
+        $first:"$ownerVideos",
+      }
+    }
+  }
+
+])
+
+if(!videoAggregate){
+  throw new ApiError(400,"Error in fetching user's uploaded videos")
+}
+
+return res.status(200).json(new ApiResponse(201,videoAggregate,"User's uploaded videos fetched successfully"))
+
+
+})
+
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
     page = 1,
@@ -335,4 +384,5 @@ export {
   updateVideo,
   deleteVideo,
   togglePublishStatus,
+  getMyVideos
 };
