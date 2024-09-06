@@ -18,7 +18,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     console.log(subscription)
 
     if(subscription){
-        await Subscription.findByIdAndDelete(subscription._id,{new:true})
+        await Subscription.findByIdAndDelete(subscription._id)
     }
     else{
         await Subscription.create({channel:channelId,subscriber:userId})
