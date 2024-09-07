@@ -319,7 +319,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
   }
 
   const video = await Video.findById(videoId);
-  if (video.owner !== req.user?._id) {
+  // console.log(video.owner,req.user?._id)
+  if (String(video.owner) !== String(req.user?._id)) {
     throw new ApiError(400, "This video is not published by you !!");
   }
 
