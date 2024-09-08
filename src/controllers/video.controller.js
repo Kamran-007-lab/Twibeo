@@ -58,13 +58,16 @@ return res.status(200).json(new ApiResponse(201,videoAggregate,"User's uploaded 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
     page = 1,
-    limit = 10,
+    limit = 12,
     query = "",
-    sortBy,
-    sortType,
-    userId,
+    sortBy="createdAt",
+    sortType=1,
   } = req.query;
+  // console.log(typeof(page),typeof(limit),typeof(sortBy),typeof(sortType))
   //TODO: get all videos based on query, sort, pagination
+  const parsedPage = parseInt(page, 10);
+  const parsedLimit = parseInt(limit, 10);
+  const parsedSortType = parseInt(sortType, 10);
 
   const videoAggregate = Video.aggregate([
     {
@@ -102,14 +105,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
     },
     {
       $sort: {
-        [sortBy || "createdAt"]: sortType || 1,
+        [sortBy || "createdAt"]: parsedSortType || 1,
       },
     },
   ]);
 
   const options = {
-    page,
-    limit,
+    page:parsedPage,
+    limit:parsedLimit,
     customLabels: {
       totalDocs: "totalVideos",
       docs: "videos",
